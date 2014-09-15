@@ -1,6 +1,13 @@
 __author__ = 'MarcoGiancarli, m.a.giancarli@gmail.com'
 
 
+import random
+from math import exp
+
+def sigmoid(t):
+    return 1 / (1 + exp(-t))
+
+
 class NeuralNetwork:
     layers = []
 
@@ -31,19 +38,57 @@ class NeuralNetwork:
                 #TODO add an exception here
             prev_num_nodes = num_nodes
 
-    ''' This method is used internally for training on a complete data set. '''
+    ''' This method is used for supervised training on a whole data set. '''
     def train(self, inputs, outputs):
         self.inputs = inputs
         self.outputs = outputs
-        # iterate through data set and train neural network
-        #TODO iterate & train
+        # same size as outputs, all 0s
+        output_vectors = [[0 for dummy in self.layers[-1].nodes] for dummy in outputs]
+        for vector, output in output_vectors, outputs:
+            vector[output] += 1
+        # iterate through data set and feed forward
+        for input, y in inputs, output_vectors:
+            _, A, Z = self.predict(input)
+            D = [[] for dummy in len(A)]  # same size as A
+            D[-1] = [a-y for a in A[-1]]
+            for a, d, d_prev, layer in reversed(A[1:-1]), reversed(D[1:-1]), reversed(D[1:]), reversed(self.layers[:-1]):
+                d = [sum(node.weights)*d_prev_i for node, d_prev_i in layer.nodes, d_prev]
+                for di, ai in d, a:
+                    di *= ai * (1-ai)
+            for d, a in D, A:
+                for di, ai in d, a:
+                    di *= ai
+            gradient = []
+            for d in D:
+                gradient.append([di/len(inputs) for di in d])
+                #TODO add regularization
+            self.gradient_descent(gradient)
 
-    ''' This method is used internally for adding new rows to the data set and training again '''
+    ''' This method is used for adding new rows to the data set and training again '''
     def retrain(self, inputs, outputs):
         # add input and output to current set and call train
         self.inputs.append(inputs)
         self.outputs.append(outputs)
         self.train(self.inputs, self.outputs)
+
+    def predict(self, example):
+        if len(example) != len(self.layers[0]):
+            #TODO throw exception
+            pass
+        A = []
+        Z = []
+        A.append(example)
+        Z.append([])
+        for layer in self.layers[1:]:
+            a, z = layer.feed_forward(A[-1])
+            A.append(a)
+            Z.append(z)
+        prediction = self.layers[-1].nodes[A[-1].index(max(A[-1]))].label
+        return prediction, A, Z  # return values for back prop
+
+    def gradient_descent(self, gradient):
+        #TODO gradient descent
+        pass
 
 
 class Layer:
@@ -60,6 +105,15 @@ class Layer:
                 self.nodes.append(Node(node_type, init_style, prev_num_nodes))
             #TODO do stuff
 
+    def feed_forward(self, prev_values):
+        a = []
+        z = []
+        for node in self.nodes:
+            ai, zi = node.feed_forward(prev_values)
+            a.append(ai)
+            z.append(zi)
+        return a, z
+
 
 class Node:
     NODE_TYPE = ''
@@ -71,14 +125,22 @@ class Node:
         self.NODE_TYPE = node_type
         if node_type is NodeType.Output:
             self.label = str(label)
-        #TODO add init for theta here
+        if init_style is NodeInitStyle.Ones:
+            weights = [1.0 for dummy in range(prev_num_nodes+1)]
+        if init_style is NodeInitStyle.Zeros:
+            weights = [0.0 for dummy in range(prev_num_nodes+1)]
+        if init_style is NodeInitStyle.Random:
+            weights = [random.randrange(-1, 1) for dummy in range(prev_num_nodes+1)]
 
-    def feed_forward(self, prev_layer_values):
-        if len(prev_layer_values) != len(self.weights):
+    def feed_forward(self, prev_values):
+        prev_a = prev_values.clone()
+        prev_a.push(1)
+        if len(prev_a) != len(self.weights):
             #TODO throw an exception
             pass
-        val = sum(zip(self.weights, prev_layer_values))
-        return val
+        zi = sum([weight*value for weight, value in self.weights, prev_a])
+        ai = sigmoid(zi)
+        return ai, zi
 
 
 class NodeType:
