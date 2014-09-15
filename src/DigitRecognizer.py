@@ -1,6 +1,6 @@
 __author__ = 'MarcoGiancarli'
 
-from sklearn import cluster
+
 from csv import reader
 
 with open('res/datasets/train.csv', ) as training_file:

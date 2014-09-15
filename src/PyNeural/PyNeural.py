@@ -18,7 +18,11 @@ class NeuralNetwork:
     # to the index of the output node which contains the correct label
     outputs = []
 
-    def __init__(self, layer_sizes, init_style, labels=None):
+    # Step size variable
+    alpha = 0
+
+    def __init__(self, layer_sizes, init_style, alpha, labels=None):
+        self.alpha = alpha
         prev_num_nodes = 0
         for num_nodes in layer_sizes:
             if len(self.layers) == 0:
@@ -55,13 +59,16 @@ class NeuralNetwork:
                 d = [sum(node.weights)*d_prev_i for node, d_prev_i in layer.nodes, d_prev]
                 for di, ai in d, a:
                     di *= ai * (1-ai)
-            for d, a in D, A:
-                for di, ai in d, a:
-                    di *= ai
             gradient = []
+            for d, a in D, A:
+                gradient.append([])
+                for di in d:
+                    gradient[-1].append([])
+                    for ai in a:
+                        gradient[-1][-1].append(di * ai / len(inputs))
             for d in D:
                 gradient.append([di/len(inputs) for di in d])
-                #TODO add regularization
+            #TODO add regularization
             self.gradient_descent(gradient)
 
     ''' This method is used for adding new rows to the data set and training again '''
@@ -87,8 +94,10 @@ class NeuralNetwork:
         return prediction, A, Z  # return values for back prop
 
     def gradient_descent(self, gradient):
-        #TODO gradient descent
-        pass
+        for layer, g in self.layers[1:], gradient[1:]:
+            for node, gi in layer, g:
+                for weight, gij in node, gi:
+                    weight = weight - self.alpha * gij
 
 
 class Layer:
