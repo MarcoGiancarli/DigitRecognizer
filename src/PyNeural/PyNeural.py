@@ -8,6 +8,7 @@ def sigmoid(t):
     return 1 / (1 + exp(-t))
 
 
+#TODO: learning curves?
 class NeuralNetwork:
     layers = []
 
@@ -31,15 +32,15 @@ class NeuralNetwork:
                 self.layers.append(Layer(num_nodes, NodeType.Inner, init_style, prev_num_nodes))
             elif 1 + len(self.layers) == len(layer_sizes):
                 if labels is not None and num_nodes != len(labels):
-                    pass
                     #TODO throw exception here
+                    print 'Fucked up because the number of labels is wrong'
                 if labels is None:
                     # if no labels specified for the output nodes, use their indices
                     labels = [str(node_number) for node_number in range(num_nodes)]
                 self.layers.append(Layer(num_nodes, NodeType.Output, init_style, prev_num_nodes, labels))
             else:
-                pass
                 #TODO add an exception here
+                print 'Fucked up on network init'
             prev_num_nodes = num_nodes
 
     ''' This method is used for supervised training on a whole data set. '''
@@ -54,7 +55,7 @@ class NeuralNetwork:
         for input, y in inputs, output_vectors:
             _, A, Z = self.predict(input)
             D = [[] for dummy in len(A)]  # same size as A
-            D[-1] = [a-y for a in A[-1]]
+            D[-1] = [[ai-yi for ai, yi in a, y] for a in A[-1]]
             for a, d, d_prev, layer in reversed(A[1:-1]), reversed(D[1:-1]), reversed(D[1:]), reversed(self.layers[:-1]):
                 d = [sum(node.weights)*d_prev_i for node, d_prev_i in layer.nodes, d_prev]
                 for di, ai in d, a:
@@ -79,9 +80,9 @@ class NeuralNetwork:
         self.train(self.inputs, self.outputs)
 
     def predict(self, example):
-        if len(example) != len(self.layers[0]):
+        if len(example) != len(self.layers[0].nodes):
             #TODO throw exception
-            pass
+            print 'Fucked up on predict'
         A = []
         Z = []
         A.append(example)
@@ -112,7 +113,6 @@ class Layer:
             # other node types don't get a label
             for node_number in range(size):
                 self.nodes.append(Node(node_type, init_style, prev_num_nodes))
-            #TODO do stuff
 
     def feed_forward(self, prev_values):
         a = []
@@ -146,7 +146,7 @@ class Node:
         prev_a.push(1)
         if len(prev_a) != len(self.weights):
             #TODO throw an exception
-            pass
+            print 'Fucked up on node feed_forward'
         zi = sum([weight*value for weight, value in self.weights, prev_a])
         ai = sigmoid(zi)
         return ai, zi
