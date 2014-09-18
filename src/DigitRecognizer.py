@@ -15,7 +15,11 @@ training_y = []
 with open('res/datasets/train.csv', ) as training_file:
     training_data = reader(training_file, delimiter=',')
     skipped_titles = False
+    i = 0             # remove me
     for line in training_data:
+        i += 1        # remove me
+        if i > 200:   # remove me
+            break     # remove me
         if not skipped_titles:
             skipped_titles = True
             continue
@@ -24,7 +28,7 @@ with open('res/datasets/train.csv', ) as training_file:
         training_x_raw = fields[1:]
         # remove the damn labels
         training_y.append(int(training_y_raw))
-        training_x.append([int(val) for val in training_x_raw[1:]])
+        training_x.append([int(val) for val in training_x_raw])
 
 print 'Training set loaded. Samples:', len(training_x)
 # print 'Loading test set...'
