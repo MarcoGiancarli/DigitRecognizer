@@ -76,13 +76,6 @@ class NeuralNetwork:
             #TODO add regularization
             self.gradient_descent(gradient)
 
-    # ''' This method is used for adding new rows to the data set and training again '''
-    # def retrain(self, inputs, outputs):
-    #     # add input and output to current set and call train
-    #     self.inputs.append(inputs)
-    #     self.outputs.append(outputs)
-    #     self.train(self.inputs, self.outputs)
-
     def predict(self, example):
         if len(example) != len(self.layers[0].nodes):
             #TODO throw exception
