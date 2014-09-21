@@ -3,16 +3,17 @@ __author__ = 'MarcoGiancarli, m.a.giancarli@gmail.com'
 
 import random
 from math import expm1  # more accurate than normal exp
+import numpy as np
 
 def sigmoid(t):
-    # add caps to avoid math range error
     if t > 30:
         return 1
     if t < -30:
         return 0
     return 1.0 / (1.0 + expm1(-t))
 
-
+#TODO: add method to save state and return aspects (such as size of network, weights, etc.)
+#TODO: the distribution for 100 untrained predictions turned out to be [50, 27, 8, 4, 3, 6, 1, 0 , 1]. Fix predict!!!
 #TODO: learning curves?
 class NeuralNetwork:
     def __init__(self, layer_sizes, init_style, alpha, labels=None):
@@ -89,8 +90,8 @@ class NeuralNetwork:
             exit()
         A = []
         Z = []
-        A.append(example)  # a_1 = x
-        Z.append([])       # no values for z_1
+        A.append(list(example))  # a_1 == x
+        Z.append([])  # no values for z_1
         prev_a = list(example)
         for layer in self.layers[1:]:
             a, z = layer.feed_forward(prev_a)
@@ -98,6 +99,7 @@ class NeuralNetwork:
             Z.append(z)
             prev_a = a
         prediction = self.layers[-1].nodes[A[-1].index(max(A[-1]))].label
+        print len(A[0]), len(Z[0])
         return prediction, A, Z  # return values for back prop
 
     def gradient_descent(self, gradient):

@@ -30,6 +30,11 @@ with open('res/datasets/train.csv', ) as training_file:
         training_y.append(int(training_y_raw))
         training_x.append([int(val) for val in training_x_raw])
 
+# normalize the data so that the range is from -1 to 1
+for i in range(len(training_x)):
+    for j in range(len(training_x[i])):
+        training_x[i][j] = (training_x[i][j] / 127.5) - 1.0
+
 print 'Training set loaded. Samples:', len(training_x)
 # print 'Loading test set...'
 #
@@ -41,9 +46,10 @@ print 'Training set loaded. Samples:', len(training_x)
 # print 'Test set loaded.'
 print 'Training network...'
 
-network = NeuralNetwork([784,140,10], NodeInitStyle.Random, .1, labels=[str(i) for i in range(10)])
-#TODO: make some tests to see if network initialized correctly
+#TODO: test with a range of alpha values to get an appropriate step size.
+network = NeuralNetwork([784,140,10], NodeInitStyle.Ones, .1, labels=[str(i) for i in range(10)])
 
+#TODO: make some tests to see if network initialized correctly
 network.train(training_x[:-100], training_y[:-100])
 
 print 'Network trained.'
