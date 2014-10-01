@@ -5,6 +5,7 @@ import random
 import math
 import numpy as np
 
+# Use a consistent random seed so that all tests are also consistent.
 random.seed(911*100)
 # It would be like 9-11 times 100.
 # 9-11 times 100? Jesus, that's...
@@ -17,13 +18,13 @@ random.seed(911*100)
 #         return 0.0
 #     return 1.0 / (1.0 + math.expm1(-t))
 
-# trying out tanh instead of normal sigmoid as the activation function; should be easier to compute
+# trying out tanh instead of normal sigmoid as the activation function; should be easier to compute. Emulates sigmoid
 def sigmoid(x):
-    return math.tanh(x)
+    return (math.tanh(x) + 1) / 2
 
 # derivative of our sigmoid function
-def d_sigmoid(y):
-    return 1.0 - y**2
+def d_sigmoid(x):
+    return math.sech(x) / 2
 
 def make_weight(init_style):
     if init_style is NodeInitStyle.Random:
@@ -113,14 +114,16 @@ class NeuralNetwork:
         Z = [None]*len(self.theta)
         Z[0] = None  # z_1 doesn't exist
         for l in range(1, len(self.theta)):
-            print self.theta[l].shape, A[l-1].shape, A[l-1]
+            print self.theta[l].shape, A[l-1].shape
             # note: for bugs with array dimensions, use .shape
             Z[l] = self.theta[l] * A[l-1].getT()
             temp = [[sigmoid(Z_ij) for Z_ij in Z_i] for Z_i in Z[l].tolist()]
-            A[l] = np.mat([temp_i.append(1) for temp_i in temp])
+            for i in range(0, len(temp)):
+                temp[i].append(1)
+            A[l] = np.mat(temp).getT()
         return A, Z
 
-    ''' Back propagate for all training samples simultaneously. '''
+    ''' Back propagate for all training samples. '''
     def back_prop(self, inputs, outputs):
         # note: outputs is a list of the indices of the correct output node
 
