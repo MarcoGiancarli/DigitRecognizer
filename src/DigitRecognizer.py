@@ -47,7 +47,7 @@ print 'Training set loaded. Samples:', len(training_x)
 print 'Training network...'
 
 #TODO: test with a range of alpha values to get an appropriate step size.
-network = NeuralNetwork([784,140,10], NodeInitStyle.Ones, .1, labels=[str(i) for i in range(10)])
+network = NeuralNetwork([784,140,10], NodeInitStyle.Random, .1, labels=[str(i) for i in range(10)], regularization_constant=1)
 
 #TODO: make some tests to see if network initialized correctly
 network.train(training_x[:-100], training_y[:-100])

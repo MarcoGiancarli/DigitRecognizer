@@ -5,7 +5,7 @@ import random
 import math
 import numpy as np
 
-random.seed(911*1000)
+random.seed(911*100)
 # It would be like 9-11 times 100.
 # 9-11 times 100? Jesus, that's...
 # Yes, 91,100.
@@ -22,7 +22,7 @@ def sigmoid(x):
     return math.tanh(x)
 
 # derivative of our sigmoid function
-def dsigmoid(y):
+def d_sigmoid(y):
     return 1.0 - y**2
 
 def make_weight(init_style):
@@ -49,8 +49,9 @@ def output_scalar_to_vector(scalar, num_outputs):
 #TODO: the distribution for 100 untrained predictions turned out to be [50, 27, 8, 4, 3, 6, 1, 0 , 1]. Fix predict!!!
 #TODO: learning curves?
 class NeuralNetwork:
-    def __init__(self, layer_sizes, init_style, alpha, labels=None):
+    def __init__(self, layer_sizes, init_style, alpha, labels=None, regularization_constant=0):
         self.alpha = alpha
+        self.regularization_constant = regularization_constant
 
         if labels is None:
             self.labels = range(layer_sizes[-1])
@@ -68,15 +69,12 @@ class NeuralNetwork:
 
         # theta represents the weights for each node. we skip the first layer because it has no weights.
         self.theta = [[]]
-        l = 1
-        while l < len(layer_sizes):
+        for l in range(1, len(layer_sizes)):
             # append a matrix which represents the initial weights for layer l
             self.theta.append(np.mat(
                     [[make_weight(init_style) for prev_node in range(layer_sizes[l-1])]  # add weight for each prev node
                                               for node in range(layer_sizes[l])]  # do this for each current node
             ))
-            l += 1
-
 
         # self.layers = []
         # # Inputs should be a list of lists containing the input values in each row
@@ -107,20 +105,66 @@ class NeuralNetwork:
         #         exit()
         #     prev_num_nodes = num_nodes
 
+    ''' Feed forward and return lists of matrices A and Z for all training samples,
+        where A[l][i][j] is A at layer l, training sample i, and node j. '''
     def feed_forward(self, input_matrix):
-        A = [].append(input_matrix)
-        Z = [[]]  # z_1 doesn't exist
-        l = 1
-        while l < len(self.theta):
-            Z[l] = self.theta[l] * A[l-1]
-            temp = [[sigmoid(Zij) for Zij in Zi] for Zi in Z[l]]
-            A[l] = np.mat([temp, [1]*len(A[l-1]) ])
-            l += 1
+        A = [None]*len(self.theta)
+        A[0] = input_matrix
+        Z = [None]*len(self.theta)
+        Z[0] = None  # z_1 doesn't exist
+        for l in range(1, len(self.theta)):
+            print self.theta[l].shape, A[l-1].shape, A[l-1]
+            # note: for bugs with array dimensions, use .shape
+            Z[l] = self.theta[l] * A[l-1].getT()
+            temp = [[sigmoid(Z_ij) for Z_ij in Z_i] for Z_i in Z[l].tolist()]
+            A[l] = np.mat([temp_i.append(1) for temp_i in temp])
         return A, Z
+
+    ''' Back propagate for all training samples simultaneously. '''
+    def back_prop(self, inputs, outputs):
+        # note: outputs is a list of the indices of the correct output node
+
+        A, Z = self.feed_forward(np.mat(inputs))
+
+        # let y be a matrix where y[i] is the output vector for training sample i
+        y = np.mat([output_scalar_to_vector(output) for output in outputs], len(self.theta[-1][0]))
+
+        # let delta be a list of matrices where delta[l][i][j] is delta
+        # at layer l, training sample i, and node j
+        delta = [] * len(self.theta)
+        delta[-1] = A[-1] - y
+
+        l = len(self.theta) - 1
+        while l > 0:  # note: no error on input layer
+            theta_T_delta = self.theta[l].getT() * delta[l+1]
+            d_sigmoid_z = [[d_sigmoid(Z_ij) for Z_ij in Z_i] for Z_i in Z[l]]
+            delta[l] = np.multiply(theta_T_delta, d_sigmoid_z)
+            l -= 1
+
+        # Calculate the partial derivatives for all theta values using delta
+        D = []
+        l = 0
+        i = 0
+        j = 0
+        while l < len(self.theta)-1:  # number of layers
+            D_matrix = []
+            while i < len(self.theta[l]):  # number of training samples
+                D_matrix.append([])
+                while j < len(self.theta[l][i]):  # number of weights at this layer
+                    deriv_theta = (1/len(self.theta)) * (A[l][:][j] * delta[l+1][i][:])
+                    if j == 0:
+                        D_matrix.append(deriv_theta)
+                    else:  # add a regularization term
+                        D_matrix.append(deriv_theta + self.regularization_constant + self.theta[l][i][j])
+            D.append(np.mat(D_matrix))
+
+        return D
 
     ''' This method is used for supervised training on a whole data set. '''
     def train(self, inputs, outputs):
-
+        for i in range(20):
+            D = self.back_prop(inputs, outputs)
+            self.gradient_descent(D)
 
         # self.inputs = inputs
         # self.outputs = outputs
@@ -150,8 +194,17 @@ class NeuralNetwork:
         #     #TODO add regularization
         #     self.gradient_descent(gradient)
 
-    def predict(self, example):
+    ''' This method calls feed_forward and returns just the prediction labels for all samples. '''
+    def predict(self, inputs):
+        A, _ = self.feed_forward(np.mat(inputs))
+        a = A[-1]
 
+        predictions = []
+        for a_i in a:  # a_i is the output vector for some sample i
+            label_index = output_vector_to_scalar(a_i)
+            predictions.append(label_index)
+
+        return predictions
 
         # if len(example) != len(self.layers[0].nodes):
         #     #TODO throw exception
@@ -172,7 +225,13 @@ class NeuralNetwork:
         # return prediction, A, Z  # return values for back prop
 
     def gradient_descent(self, gradient):
-
+        l = 1
+        i = 0
+        j = 0
+        while l < len(self.theta):  # number of layers
+            while i < len(self.theta[l]):  # number of training samples
+                while j < len(self.theta[l][i]):  # number of weights at this layer
+                    self.theta[l][i][j] += self.alpha * gradient
 
         # print len(gradient[2]), len(gradient[2][0]), len(self.layers[2].nodes), len(self.layers[2].nodes[0].weights)
         # print len(gradient[2]), len(gradient[2][0]), len(self.layers[1].nodes), len(self.layers[1].nodes[0].weights)
