@@ -135,30 +135,21 @@ class NeuralNetwork:
         A, Z = self.feed_forward(np.mat(input))
 
         # let y be a matrix where y[i] is the output vector for training sample i
-        y = output_scalar_to_vector(output, self.theta[-1].shape[0])
+        y = np.mat(output_scalar_to_vector(output, self.theta[-1].shape[0]))
 
         # let delta be a list of matrices where delta[l][i][j] is delta
         # at layer l, training sample i, and node j
         delta = [None] * len(self.theta)  # the delta is None for the input layer, others we assign later
-        delta[-1] = A[-1] - y
+        delta[-1] = np.multiply(A[-1] - y.getT(), d_sigmoid(Z[-1]))
 
         # vectorized_d_sigmoid = np.vectorize(d_sigmoid, otypes=[np.float]) TODO remove
-        for l in reversed(range(1, len(self.theta)-1)):  # note: no error on input layer
-            print np.mat(self.theta[l+1]).getT().shape, delta[l+1].getT().shape
-            theta_T_delta = np.mat(self.theta[l+1]).getT() * delta[l+1].getT()
-            d_sigmoid_z = d_sigmoid(Z[l])
-            delta[l] = np.multiply(np.mat(theta_T_delta.tolist()[:-1]), d_sigmoid_z)
-            print delta[l].shape
-        print 'lolwat', delta[1].shape, delta[2].shape
-
-        for d in delta:
-            if d is not None:
-                print d.shape, '-- delta'
-        print len(delta)
+        for l in reversed(range(1, len(self.theta)-1)):  # note: no error on input layer, we have the output layer
+            theta_T_delta = np.mat(self.theta[l+1]).getT() * delta[l+1]
+            delta[l] = np.multiply(np.mat(theta_T_delta.tolist()[:-1]), d_sigmoid(Z[l]))
 
         # Calculate the partial derivatives for all theta values using delta
         D = []
-        for l in range(0, len(self.theta)-1):  # number of layers
+        for l in range(1, len(self.theta)):  # number of layers
             D_matrix = []
             for i in range(0, len(self.theta[l])):  # number of weights in this layer
                 D_matrix.append([])
@@ -212,7 +203,14 @@ class NeuralNetwork:
     def predict(self, input):
         A, _ = self.feed_forward(np.mat(input))
         prediction = output_vector_to_scalar(A[-1])
-        return prediction
+        if self.labels is not None:
+            if len(self.labels) != len(A[-1]):
+                # TODO: throw exception
+                print 'Fucked up because the number of labels didnt match the number of outputs'
+                exit(1)
+            return self.labels[prediction];
+        else:
+            return prediction
 
         # if len(example) != len(self.layers[0].nodes):
         #     #TODO throw exception
@@ -233,12 +231,9 @@ class NeuralNetwork:
         # return prediction, A, Z  # return values for back prop
 
     def gradient_descent(self, gradient):
-        l = 1
-        i = 0
-        j = 0
-        while l < len(self.theta):  # number of layers
-            while i < len(self.theta[l]):  # number of nodes in this layer
-                while j < len(self.theta[l][i]):  # number of nodes in the previous layer
+        for l in range(1, len(self.theta)):  # number of layers
+            for i in range(0, len(self.theta[l])):  # number of nodes in this layer
+                for j in range(0, len(self.theta[l][i])):  # number of nodes in the previous layer
                     self.theta[l][i][j] += self.alpha * gradient
 
         # print len(gradient[2]), len(gradient[2][0]), len(self.layers[2].nodes), len(self.layers[2].nodes[0].weights)
