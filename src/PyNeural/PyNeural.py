@@ -183,6 +183,9 @@ class NeuralNetwork:
             # gradient doesnt have a None value at index 0, but theta does
             self.theta[l] = np.add(self.theta[l], (-1.0 * self.alpha) * gradient[l-1])
 
+        # TODO: maybe remove this feature? could help fine tuning at the end of training
+        self.alpha = self.alpha * 0.999
+
 
 class NodeInitStyle:
     Zeros = 'Zeros'
