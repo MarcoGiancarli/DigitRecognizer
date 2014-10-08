@@ -56,9 +56,11 @@ print 'Network trained.'
 
 num_correct = 0
 num_tests = 0
-for x, y in training_x[-100:], training_y[:-100]:
+for x, y in zip(training_x[-100:], training_y[-100:]):
     prediction = network.predict(x)
-    print prediction + ' -- correct number: ' + y
+    print str(prediction) + ' -- correct number: ' + str(y)
     num_tests += 1
     if int(prediction) == y:
         num_correct += 1
+
+print str(num_correct), ' / ', str(num_tests)
