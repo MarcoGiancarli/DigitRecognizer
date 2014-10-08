@@ -6,7 +6,7 @@ import math
 import numpy as np
 
 # Use a consistent random seed so that all tests are also consistent.
-random.seed(911*100)
+# random.seed(911*100)
 # It would be like 9-11 times 100.
 # 9-11 times 100? Jesus, that's...
 # Yes, 91,100.
@@ -122,9 +122,9 @@ class NeuralNetwork:
         return D, delta
 
     ''' This method is used for supervised training on a data set. '''
-    def train(self, inputs, outputs):
+    def train(self, inputs, outputs, test_inputs=None, test_outputs=None, iteration_cap=5000):
         m = len(outputs)
-        for iteration in range(20):
+        for iteration in range(iteration_cap):
             print 'Training iteration:', str(iteration + 1)
 
             d, b = self.back_prop(inputs[0], outputs[0])
@@ -136,6 +136,9 @@ class NeuralNetwork:
                     gradient[l] = np.add(gradient[l], d[l])
                     bias_gradient[l] = np.add(bias_gradient[l], b[l])
 
+            # add regularization to the gradient matrices
+
+
             gradient_with_bias = [None]*len(self.theta)
             for l in range(1, len(self.theta)):
                 gradient_with_bias[l] = np.hstack((bias_gradient[l], gradient[l].getT()))
@@ -145,23 +148,40 @@ class NeuralNetwork:
 
             self.gradient_descent(gradient_with_bias)
 
+            #TODO: use a small test set to test the error after each iteration.
+            if test_inputs is not None and test_outputs is not None:
+                #TODO: throw mad exceptions for shit
+                num_tests = len(test_outputs)
+                num_correct = 0
+                for test_input, test_output in zip(test_inputs, test_outputs):
+                    prediction = int(self.predict(test_input))
+                    if prediction == test_output:
+                        num_correct += 1
+                test_error = 1 - (float(num_correct) / float(num_tests))
+                print 'Test at iteration', str(iteration+1) + ': ', str(num_correct), '/', str(num_tests), \
+                        '-- Error:', str(test_error)
+
+            if test_error < 0.04:
+                break
+
     ''' This method calls feed_forward and returns just the prediction labels for all samples. '''
     def predict(self, input):
         A, _ = self.feed_forward(np.mat(input))
         prediction = output_vector_to_scalar(A[-1])
-        if self.labels is not None:
-            if len(self.labels) != len(A[-1]):
-                # TODO: throw exception
-                print 'Fucked up because the number of labels didnt match the number of outputs'
-                exit(1)
-            return self.labels[prediction]
-        else:
-            return prediction
+        # if self.labels is not None:
+        #     if len(self.labels) != len(A[-1]):
+        #         # TODO: throw exception
+        #         print 'Fucked up because the number of labels didnt match the number of outputs'
+        #         exit(1)
+        #     return self.labels[prediction]
+        # else:
+        #     return prediction
+        return prediction
 
     def gradient_descent(self, gradient):
         for l in range(1, len(self.theta)):
             # gradient doesnt have a None value at index 0, but theta does
-            self.theta[l] = np.add(self.theta[l], (-1 * self.alpha) * gradient[l-1])
+            self.theta[l] = np.add(self.theta[l], (-1.0 * self.alpha) * gradient[l-1])
 
 
 class NodeInitStyle:

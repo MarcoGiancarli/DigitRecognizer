@@ -1,4 +1,4 @@
-__author__ = 'MarcoGiancarli'
+__author__ = 'MarcoGiancarli, m.a.giancarli@gmail.com'
 
 
 from csv import reader
@@ -15,11 +15,11 @@ training_y = []
 with open('res/datasets/train.csv', ) as training_file:
     training_data = reader(training_file, delimiter=',')
     skipped_titles = False
-    i = 0             # remove me
+    # i = 0              # remove me
     for line in training_data:
-        i += 1        # remove me
-        if i > 2000:   # remove me
-            break     # remove me
+    #     i += 1         # remove me
+    #     if i > 12000:  # remove me
+    #         break      # remove me
         if not skipped_titles:
             skipped_titles = True
             continue
@@ -39,10 +39,10 @@ print 'Training set loaded. Samples:', len(training_x)
 print 'Training network...'
 
 #TODO: test with a range of alpha values to get an appropriate step size.
-network = NeuralNetwork([784,180,10], NodeInitStyle.Random, 1, labels=[str(i) for i in range(10)], reg_constant=1)
+network = NeuralNetwork([784,36,10], NodeInitStyle.Random, 5, labels=[str(i) for i in range(10)], reg_constant=1)
 
 #TODO: make some tests to see if network initialized correctly
-network.train(training_x[:-100], training_y[:-100])
+network.train(training_x[:-100], training_y[:-100], test_inputs=training_x[-100:], test_outputs=training_y[-100:])
 
 print 'Network trained.'
 
