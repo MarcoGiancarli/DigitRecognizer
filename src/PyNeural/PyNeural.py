@@ -124,25 +124,24 @@ class NeuralNetwork:
     ''' This method is used for supervised training on a data set. '''
     def train(self, inputs, outputs):
         m = len(outputs)
-        for iteration in range(50):
-            D = []
-            B = []
-            for input, output in zip(inputs, outputs):
-                d, b = self.back_prop(input, output)
-                D.append(d)
-                B.append(b)
+        for iteration in range(20):
+            print 'Training iteration:', str(iteration + 1)
 
-            gradient = [np.mat(d) for d in D[0]]
-            bias_gradient = [np.mat(b) for b in B[0]]
-            for d, b, l in zip(D, B, range(len(self.theta)))[1:]:
-                gradient[l] = np.add(gradient[l], d[l])
-                bias_gradient[l] = np.add(bias_gradient[l], b[l])
+            d, b = self.back_prop(inputs[0], outputs[0])
+            gradient = [np.mat(d_l) for d_l in d]
+            bias_gradient = [np.mat(b_l) for b_l in b]
+            for input, output in zip(inputs[1:], outputs[1:]):
+                d, b = self.back_prop(input, output)
+                for l in range(1, len(self.theta)):
+                    gradient[l] = np.add(gradient[l], d[l])
+                    bias_gradient[l] = np.add(bias_gradient[l], b[l])
 
             gradient_with_bias = [None]*len(self.theta)
             for l in range(1, len(self.theta)):
                 gradient_with_bias[l] = np.hstack((bias_gradient[l], gradient[l].getT()))
-            gradient_with_bias = [g / m for g in gradient_with_bias[1:]]
+
             # divide by m now because we couldn't while in the back_prop method
+            gradient_with_bias = [g / m for g in gradient_with_bias[1:]]
 
             self.gradient_descent(gradient_with_bias)
 
@@ -160,9 +159,8 @@ class NeuralNetwork:
             return prediction
 
     def gradient_descent(self, gradient):
-        print gradient[0].shape, gradient[1].shape
-        for l in range(1, len(self.theta)-1):
-            print gradient[l].shape
+        for l in range(1, len(self.theta)):
+            # gradient doesnt have a None value at index 0, but theta does
             self.theta[l] = np.add(self.theta[l], (-1 * self.alpha) * gradient[l-1])
 
 

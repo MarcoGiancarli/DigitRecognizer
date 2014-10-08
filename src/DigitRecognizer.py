@@ -18,7 +18,7 @@ with open('res/datasets/train.csv', ) as training_file:
     i = 0             # remove me
     for line in training_data:
         i += 1        # remove me
-        if i > 200:   # remove me
+        if i > 2000:   # remove me
             break     # remove me
         if not skipped_titles:
             skipped_titles = True
@@ -36,18 +36,10 @@ for i in range(len(training_x)):
         training_x[i][j] = (training_x[i][j] / 127.5) - 1.0
 
 print 'Training set loaded. Samples:', len(training_x)
-# print 'Loading test set...'
-#
-# with open('res/datasets/test.csv', ) as test_file:
-#    test_data = reader(test_file, delimiter=',')
-#    test_x = [row[1:] for row in test_data]
-#    test_y = [row[0] for row in test_data]
-#
-# print 'Test set loaded.'
 print 'Training network...'
 
 #TODO: test with a range of alpha values to get an appropriate step size.
-network = NeuralNetwork([784,140,10], NodeInitStyle.Random, .1, labels=[str(i) for i in range(10)], reg_constant=1)
+network = NeuralNetwork([784,180,10], NodeInitStyle.Random, 1, labels=[str(i) for i in range(10)], reg_constant=1)
 
 #TODO: make some tests to see if network initialized correctly
 network.train(training_x[:-100], training_y[:-100])
