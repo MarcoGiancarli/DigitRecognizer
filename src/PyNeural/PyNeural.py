@@ -4,9 +4,10 @@ __author__ = 'MarcoGiancarli, m.a.giancarli@gmail.com'
 import random
 import math
 import numpy as np
+import multiprocessing as mp
 
 # Use a consistent random seed so that all tests are also consistent.
-# random.seed(911*100)
+random.seed(911*100)
 # It would be like 9-11 times 100.
 # 9-11 times 100? Jesus, that's...
 # Yes, 91,100.
@@ -35,7 +36,8 @@ def make_weight(init_style):
 
 def output_vector_to_scalar(vector):
     # get the index of the max in the vector
-    return vector.tolist().index(max(vector))
+    m,i = max((v,i) for i,v in enumerate(vector.tolist()))
+    return i
 
 
 def output_scalar_to_vector(scalar, num_outputs):
@@ -58,10 +60,6 @@ class NeuralNetwork:
             self.labels = range(layer_sizes[-1])
         else:
             self.labels = labels
-        if len(labels) != layer_sizes[-1]:
-            #TODO: throw exception here
-            print 'Fucked up because the number of labels is wrong'
-            exit(1)
 
         if init_style not in [NodeInitStyle.Random, NodeInitStyle.Ones, NodeInitStyle.Zeros]:
             #TODO: throw exception here
@@ -127,17 +125,24 @@ class NeuralNetwork:
         for iteration in range(iteration_cap):
             print 'Training iteration:', str(iteration + 1)
 
+            #TODO: add the first back_prop call to the parallel section, init gradients as zeros
             d, b = self.back_prop(inputs[0], outputs[0])
             gradient = [np.mat(d_l) for d_l in d]
             bias_gradient = [np.mat(b_l) for b_l in b]
+
+            #TODO: add parallelism here to speed up training
+            # with mp.Pool(processes=4) as pool:
+            #     q = mp.Queue()
             for input, output in zip(inputs[1:], outputs[1:]):
+                # p = mp.Process(target=self.back_prop, args=(input, output))
+                # p.start()
+                # p.join()
                 d, b = self.back_prop(input, output)
                 for l in range(1, len(self.theta)):
                     gradient[l] = np.add(gradient[l], d[l])
                     bias_gradient[l] = np.add(bias_gradient[l], b[l])
 
             # add regularization to the gradient matrices
-
 
             gradient_with_bias = [None]*len(self.theta)
             for l in range(1, len(self.theta)):
@@ -157,11 +162,11 @@ class NeuralNetwork:
                     prediction = int(self.predict(test_input))
                     if prediction == test_output:
                         num_correct += 1
-                test_error = 1 - (float(num_correct) / float(num_tests))
+                test_accuracy = float(num_correct) / float(num_tests)
                 print 'Test at iteration', str(iteration+1) + ': ', str(num_correct), '/', str(num_tests), \
-                        '-- Error:', str(test_error)
+                    '-- Accuracy:', str(test_accuracy)
 
-            if test_error < 0.04:
+            if num_correct == num_tests:
                 break
 
     ''' This method calls feed_forward and returns just the prediction labels for all samples. '''

@@ -5,7 +5,4 @@ A hand-written-digit recognition program using a feed forward neural network. Th
 
 This project also contains a module, PyNeural, which is meant to be used as a neural network system for machine learning.
 
-To Do
-=====
-
-1. Add more vectorization using numpy.
+<b>Development of this project has stopped in favor of a more efficient Java version.</b>
