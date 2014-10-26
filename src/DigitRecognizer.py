@@ -5,7 +5,6 @@ from csv import reader
 from csv import writer
 from csv import QUOTE_NONE
 from PyNeural.PyNeural import NeuralNetwork
-from PyNeural.PyNeural import NodeInitStyle
 
 print 'Loading training set...'
 
@@ -40,11 +39,12 @@ for i in range(len(training_x)):
 print 'Training set loaded. Samples:', len(training_x)
 print 'Training network...'
 
-#TODO: test with a range of alpha values to get an appropriate step size.
-network = NeuralNetwork([784,28,10], NodeInitStyle.Random, 5, reg_constant=1)
+layer_sizes = [784,50,10]
+alpha = 6
+network = NeuralNetwork(layer_sizes, alpha, reg_constant=1)
 
-#TODO: make some tests to see if network initialized correctly
-network.train(training_x[:-2000], training_y[:-2000], test_inputs=training_x[-2000:], test_outputs=training_y[-2000:])
+network.train(training_x[:-8000], training_y[:-8000], test_inputs=training_x[-8000:],
+        test_outputs=training_y[-8000:], epoch_cap=100000, error_goal=0.015)
 
 print 'Network trained.'
 
