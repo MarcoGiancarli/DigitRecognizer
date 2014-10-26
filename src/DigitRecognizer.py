@@ -39,7 +39,7 @@ for i in range(len(training_x)):
 print 'Training set loaded. Samples:', len(training_x)
 print 'Training network...'
 
-layer_sizes = [784,50,10]
+layer_sizes = [784,300,10]
 alpha = 6
 network = NeuralNetwork(layer_sizes, alpha, reg_constant=1)
 

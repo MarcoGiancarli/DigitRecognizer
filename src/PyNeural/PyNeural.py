@@ -7,15 +7,19 @@ import numpy as np
 
 
 # Using tanh instead of normal sigmoid because it's easier to compute. Emulates sigmoid.
+# def sigmoid(x):
+#     return (math.tanh(x) + 1) / 2
+# sigmoid = np.vectorize(sigmoid, otypes=[np.float])
 def sigmoid(x):
-    return (math.tanh(x) + 1) / 2
-sigmoid = np.vectorize(sigmoid, otypes=[np.float])
+    return (np.tanh(x) + 1) / 2
 
 
 # derivative of our sigmoid function
+# def d_sigmoid(x):
+#     return sigmoid(x) * (1-sigmoid(x))
+# d_sigmoid = np.vectorize(d_sigmoid, otypes=[np.float])
 def d_sigmoid(x):
-    return sigmoid(x) * (1-sigmoid(x))
-d_sigmoid = np.vectorize(d_sigmoid, otypes=[np.float])
+    return (np.tanh(x)+1) * (1-np.tanh(x)) / 4
 
 
 def output_vector_to_scalar(vector):
@@ -32,7 +36,7 @@ def output_scalar_to_vector(scalar, num_outputs):
     return vector
 
 
-#TODO: add methods to save state and return aspects (such as size of network, weights, etc.)
+#TODO: add methods to save state
 #TODO: learning curves?
 #TODO: regularization
 class NeuralNetwork:
@@ -44,7 +48,8 @@ class NeuralNetwork:
             self.labels = range(layer_sizes[-1])
         elif len(labels) != layer_sizes[-1]:
             #TODO: throw exception here
-            print 'Fucked up because the init style is not chosen from the NodeInitStyle class'
+            print 'Fucked up because the size of layer does not match the size of the outputs. (' + \
+                  str(len(labels)) + ' != ' + str(layer_sizes[-1]) + ')'
             exit(1)
         else:
             self.labels = labels
@@ -55,53 +60,51 @@ class NeuralNetwork:
             # append a matrix which represents the initial weights for layer l
             # for every node in layer l, add a weight for each node in layer l-1 plus one bias weight
             beta = 0.7 * (layer_sizes[l-1] / layer_sizes[l])
-            self.theta[l] = np.random.rand(layer_sizes[l], layer_sizes[l-1]+1)
+            self.theta[l] = np.random.random((layer_sizes[l], layer_sizes[l-1]+1))
             norm = math.sqrt(np.multiply(self.theta[l], self.theta[l]).sum())
             self.theta[l] = self.theta[l] * (beta / norm)
 
-
     ''' Feed forward and return lists of matrices A and Z for one set of inputs. '''
-    def feed_forward(self, input_matrix):
+    def feed_forward(self, input_vector):
         A = [None]*len(self.theta)
         Z = [None]*len(self.theta)
-        A[0] = input_matrix.transpose()  # 1 x n
+        A[0] = input_vector.T  # 1 x n
         Z[0] = None  # z_1 doesn't exist
         for l in range(1, len(self.theta)):
             # add a constant (1) to the set of weights that correspond with each node
-            num_ones_to_add = A[l-1].shape[1]
-            A_with_ones = np.vstack((np.ones(num_ones_to_add), A[l-1]))
-            Z[l] = self.theta[l] * A_with_ones
+            A_with_ones = np.concatenate((np.array([1]), A[l-1]))
+            Z[l] = np.dot(self.theta[l], A_with_ones)
             A[l] = sigmoid(Z[l])
 
         return A, Z
 
     ''' Back propagate for one training sample. '''
     def back_prop(self, input_vector, output_vector):
-        # note: outputs is a vector of the indices of the guessed output node
-
         A, Z = self.feed_forward(input_vector)
 
         # let delta be a list of matrices where delta[l][i][j] is delta
         # at layer l, training sample i, and node j
         delta = [None] * len(self.theta)  # the delta is None for the input layer, others we assign later
-        delta[-1] = np.multiply(A[-1] - output_vector.transpose(), d_sigmoid(Z[-1]))
+        delta[-1] = np.multiply(A[-1] - output_vector.T, d_sigmoid(Z[-1]))
 
         for l in reversed(range(1, len(self.theta)-1)):  # note: no error on input layer, we have the output layer
-            theta_t_delta = self.theta[l+1].transpose() * delta[l+1]
+            theta_t_delta = np.dot(self.theta[l+1].T, delta[l+1])
             delta[l] = np.multiply(theta_t_delta[1:], d_sigmoid(Z[l]))
 
         # Calculate the partial derivatives for all theta values using delta
         D = [None]*len(self.theta)  # make a list of size L, where L is the number of layers
         for l in range(1, len(self.theta)):
-            D[l] = A[l-1] * delta[l].transpose()
+            D[l] = np.outer(A[l-1], delta[l])
 
         return D, delta
 
     ''' This method is used for supervised training on a data set. '''
-    def train(self, inputs, outputs, test_inputs=None, test_outputs=None, epoch_cap=5000, error_goal=0):
+    def train(self, inputs, outputs, test_inputs=None, test_outputs=None, epoch_cap=10000, error_goal=0):
         # create these first so that we don't have to do it every epoch
-        input_vectors = [np.mat(x) for x in inputs]
-        output_vectors = [np.mat(output_scalar_to_vector(y, self.theta[-1].shape[0])) for y in outputs]
+        input_vectors = [np.array(x) for x in inputs]
+        output_vectors = [np.array(output_scalar_to_vector(y, self.theta[-1].shape[0])) for y in outputs]
+        test_input_vectors = [np.array(x) for x in test_inputs]
+        test_output_vectors = [np.array(output_scalar_to_vector(y, self.theta[-1].shape[0])) for y in test_outputs]
 
         m = len(outputs)
         for iteration in range(epoch_cap):
@@ -109,8 +112,8 @@ class NeuralNetwork:
 
             #TODO: add the first back_prop call to the distributed loop
             d, b = self.back_prop(input_vectors[0], output_vectors[0])
-            gradient = d  #[np.mat(d_l) for d_l in d]
-            bias_gradient = b  #[np.mat(b_l) for b_l in b]
+            gradient = d  #[np.array(d_l) for d_l in d]
+            bias_gradient = b  #[np.array(b_l) for b_l in b]
 
             #TODO: add distributed processing here to speed up training?
             for input_vector, output_vector in zip(input_vectors[1:], output_vectors[1:]):
@@ -123,7 +126,8 @@ class NeuralNetwork:
 
             gradient_with_bias = [None]*len(self.theta)
             for l in range(1, len(self.theta)):
-                gradient_with_bias[l] = np.hstack((bias_gradient[l], gradient[l].transpose()))
+                gradient_with_bias[l] = np.vstack((bias_gradient[l], gradient[l]))
+                gradient_with_bias[l] = gradient_with_bias[l].T
 
             # divide by m now because we couldn't while in the back_prop method
             gradient_with_bias = [g / m for g in gradient_with_bias[1:]]
@@ -132,10 +136,10 @@ class NeuralNetwork:
 
             # test the updated system against the validation set
             if test_inputs is not None and test_outputs is not None:
-                num_tests = len(test_outputs)
+                num_tests = len(test_output_vectors)
                 num_correct = 0
-                for test_input, test_output in zip(test_inputs, test_outputs):
-                    prediction = int(self.predict(test_input))
+                for test_input, test_output in zip(test_input_vectors, test_outputs):
+                    prediction = self.predict(test_input)
                     if prediction == test_output:
                         num_correct += 1
                 test_accuracy = float(num_correct) / float(num_tests)
@@ -147,9 +151,8 @@ class NeuralNetwork:
 
     ''' This method calls feed_forward and returns just the prediction labels for all samples. '''
     def predict(self, input):
-        A, _ = self.feed_forward(np.mat(input))
-        prediction = output_vector_to_scalar(A[-1])
-        return prediction
+        A, _ = self.feed_forward(np.array(input))
+        return np.argmax(A[-1])
 
     def gradient_descent(self, gradient):
         for l in range(1, len(self.theta)):
