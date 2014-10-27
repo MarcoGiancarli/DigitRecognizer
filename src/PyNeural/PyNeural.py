@@ -94,7 +94,7 @@ class NeuralNetwork:
         # Calculate the partial derivatives for all theta values using delta
         D = [None]*len(self.theta)  # make a list of size L, where L is the number of layers
         for l in range(1, len(self.theta)):
-            D[l] = np.outer(A[l-1], delta[l])
+            D[l] = np.dot(np.atleast_2d(A[l-1]).T, np.atleast_2d(delta[l]))
 
         return D, delta
 
@@ -157,4 +157,5 @@ class NeuralNetwork:
     def gradient_descent(self, gradient):
         for l in range(1, len(self.theta)):
             # gradient doesnt have a None value at index 0, but theta does
+            print 'Average change for layer', str(l+1), (gradient[l-1])
             self.theta[l] = np.add(self.theta[l], (-1.0 * self.alpha) * gradient[l-1])

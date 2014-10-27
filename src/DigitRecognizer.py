@@ -4,6 +4,7 @@ __author__ = 'MarcoGiancarli, m.a.giancarli@gmail.com'
 from csv import reader
 from csv import writer
 from csv import QUOTE_NONE
+import numpy as np
 from PyNeural.PyNeural import NeuralNetwork
 
 print 'Loading training set...'
@@ -27,13 +28,14 @@ with open('res/datasets/train.csv', ) as training_file:
         training_y.append(int(training_y_raw))
         training_x.append([int(val) for val in training_x_raw])
 
-#TODO: standardize the training data
+x_array = np.array(training_x)
+training_x = ((x_array - np.average(x_array)) / np.std(x_array)).tolist()
 
 print 'Training set loaded. Samples:', len(training_x)
 print 'Training network...'
 
 layer_sizes = [784,100,10]
-alpha = 1
+alpha = 100
 network = NeuralNetwork(layer_sizes, alpha, reg_constant=1)
 
 network.train(training_x[:-34000], training_y[:-34000], test_inputs=training_x[-34000:],
@@ -73,7 +75,8 @@ with open('res/datasets/test.csv', ) as test_file:
 print 'Loaded test data.'
 print 'Predicting test data...'
 
-# TODO: standardize the data
+x_array = np.array(test_x)
+test_x = ((x_array - np.average(x_array)) / np.std(x_array)).tolist()
 
 predictions = []
 for input in test_x:
