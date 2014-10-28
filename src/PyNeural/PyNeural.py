@@ -1,8 +1,8 @@
 __author__ = 'MarcoGiancarli, m.a.giancarli@gmail.com'
 
 
-import random
-import math
+# import random
+# import math
 import numpy as np
 
 
@@ -59,10 +59,10 @@ class NeuralNetwork:
         for l in range(1, len(layer_sizes)):
             # append a matrix which represents the initial weights for layer l
             # for every node in layer l, add a weight for each node in layer l-1 plus one bias weight
-            beta = 0.7 * (layer_sizes[l-1] / layer_sizes[l])
+            # beta = 0.7 * (layer_sizes[l-1] / layer_sizes[l])
             self.theta[l] = np.random.random((layer_sizes[l], layer_sizes[l-1]+1))
-            norm = math.sqrt(np.multiply(self.theta[l], self.theta[l]).sum())
-            self.theta[l] = self.theta[l] * (beta / norm)
+            # norm = math.sqrt(np.multiply(self.theta[l], self.theta[l]).sum())
+            # self.theta[l] = self.theta[l] * (beta / norm)
 
     ''' Feed forward and return lists of matrices A and Z for one set of inputs. '''
     def feed_forward(self, input_vector):
@@ -110,10 +110,10 @@ class NeuralNetwork:
         for iteration in range(epoch_cap):
             print 'Epoch:', str(iteration + 1)
 
-            #TODO: add the first back_prop call to the distributed loop
+            #TODO: add the first back_prop call to the distributable loop
             d, b = self.back_prop(input_vectors[0], output_vectors[0])
-            gradient = d  #[np.array(d_l) for d_l in d]
-            bias_gradient = b  #[np.array(b_l) for b_l in b]
+            gradient = d
+            bias_gradient = b
 
             #TODO: add distributed processing here to speed up training?
             for input_vector, output_vector in zip(input_vectors[1:], output_vectors[1:]):
@@ -157,5 +157,7 @@ class NeuralNetwork:
     def gradient_descent(self, gradient):
         for l in range(1, len(self.theta)):
             # gradient doesnt have a None value at index 0, but theta does
-            print 'Average change for layer', str(l+1), (gradient[l-1])
+            print 'Average weight for layer', str(l), self.theta[l].sum() / self.theta[l].size
+            print 'Average change for layer', str(l), (gradient[l-1][gradient[l-1] > 0].sum() - gradient[l-1][gradient[l-1] < 0].sum()) / gradient[l-1].size
+            print '-'
             self.theta[l] = np.add(self.theta[l], (-1.0 * self.alpha) * gradient[l-1])

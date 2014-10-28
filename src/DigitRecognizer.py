@@ -7,6 +7,7 @@ from csv import QUOTE_NONE
 import numpy as np
 from PyNeural.PyNeural import NeuralNetwork
 
+
 print 'Loading training set...'
 
 training_x_raw = []
@@ -35,7 +36,7 @@ print 'Training set loaded. Samples:', len(training_x)
 print 'Training network...'
 
 layer_sizes = [784,100,10]
-alpha = 100
+alpha = 1
 network = NeuralNetwork(layer_sizes, alpha, reg_constant=1)
 
 network.train(training_x[:-34000], training_y[:-34000], test_inputs=training_x[-34000:],
