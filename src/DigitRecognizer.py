@@ -18,7 +18,11 @@ training_y = []
 with open('res/datasets/train.csv', ) as training_file:
     training_data = reader(training_file, delimiter=',')
     skipped_titles = False
+    # i = 0               ###
     for line in training_data:
+        # if i > 700:     ###
+        #     break       ###
+        # i += 1          ###
         if not skipped_titles:
             skipped_titles = True
             continue
@@ -30,17 +34,18 @@ with open('res/datasets/train.csv', ) as training_file:
         training_x.append([int(val) for val in training_x_raw])
 
 x_array = np.array(training_x)
+# normalize the training set
 training_x = ((x_array - np.average(x_array)) / np.std(x_array)).tolist()
 
 print 'Training set loaded. Samples:', len(training_x)
 print 'Training network...'
 
-layer_sizes = [784,100,10]
-alpha = 1
+layer_sizes = [784,300,10]
+alpha = 25
 network = NeuralNetwork(layer_sizes, alpha, reg_constant=1)
 
-network.train(training_x[:-34000], training_y[:-34000], test_inputs=training_x[-34000:],
-        test_outputs=training_y[-4000:], epoch_cap=100000, error_goal=0.015)
+network.train(training_x[:-500], training_y[:-500], test_inputs=training_x[-500:],
+        test_outputs=training_y[-500:], epoch_cap=100000, error_goal=0.02)
 
 print 'Network trained.'
 
@@ -77,6 +82,7 @@ print 'Loaded test data.'
 print 'Predicting test data...'
 
 x_array = np.array(test_x)
+# normalize the test set
 test_x = ((x_array - np.average(x_array)) / np.std(x_array)).tolist()
 
 predictions = []

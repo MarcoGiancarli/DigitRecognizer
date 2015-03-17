@@ -60,7 +60,7 @@ class NeuralNetwork:
             # append a matrix which represents the initial weights for layer l
             # for every node in layer l, add a weight for each node in layer l-1 plus one bias weight
             # beta = 0.7 * (layer_sizes[l-1] / layer_sizes[l])
-            self.theta[l] = np.random.random((layer_sizes[l], layer_sizes[l-1]+1))
+            self.theta[l] = np.random.random((layer_sizes[l], layer_sizes[l-1]+1)) * 2 - 1
             # norm = math.sqrt(np.multiply(self.theta[l], self.theta[l]).sum())
             # self.theta[l] = self.theta[l] * (beta / norm)
 
