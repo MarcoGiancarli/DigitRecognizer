@@ -108,31 +108,16 @@ class NeuralNetwork:
 
         m = len(outputs)
         for iteration in range(epoch_cap):
-            print 'Epoch:', str(iteration + 1)
+            for input_vector, output_vector in zip(input_vectors, output_vectors):
+                gradient, bias = self.back_prop(input_vector, output_vector)
+                gradient_with_bias = [None]*len(self.theta)
 
-            #TODO: add the first back_prop call to the distributable loop
-            d, b = self.back_prop(input_vectors[0], output_vectors[0])
-            gradient = d
-            bias_gradient = b
-
-            #TODO: add distributed processing here to speed up training?
-            for input_vector, output_vector in zip(input_vectors[1:], output_vectors[1:]):
-                d, b = self.back_prop(input_vector, output_vector)
                 for l in range(1, len(self.theta)):
-                    gradient[l] = np.add(gradient[l], d[l])
-                    bias_gradient[l] = np.add(bias_gradient[l], b[l])
+                    gradient_with_bias[l] = np.vstack((bias[l], gradient[l]))
+                    gradient_with_bias[l] = gradient_with_bias[l].T
 
-            #TODO: add regularization to the gradient matrices
-
-            gradient_with_bias = [None]*len(self.theta)
-            for l in range(1, len(self.theta)):
-                gradient_with_bias[l] = np.vstack((bias_gradient[l], gradient[l]))
-                gradient_with_bias[l] = gradient_with_bias[l].T
-
-            # divide by m now because we couldn't while in the back_prop method
-            gradient_with_bias = [g / m for g in gradient_with_bias[1:]]
-
-            self.gradient_descent(gradient_with_bias)
+                gradient_with_bias = [g / m for g in gradient_with_bias[1:]]
+                self.gradient_descent(gradient_with_bias)
 
             # test the updated system against the validation set
             if test_inputs is not None and test_outputs is not None:
@@ -143,7 +128,7 @@ class NeuralNetwork:
                     if prediction == test_output:
                         num_correct += 1
                 test_accuracy = float(num_correct) / float(num_tests)
-                print 'Test at iteration', str(iteration+1) + ': ', str(num_correct), '/', str(num_tests), \
+                print 'Test at epoch', str(iteration+1) + ': ', str(num_correct), '/', str(num_tests), \
                     '-- Accuracy:', str(test_accuracy)
 
                 if num_correct / num_tests > 1 - error_goal:
@@ -157,7 +142,4 @@ class NeuralNetwork:
     def gradient_descent(self, gradient):
         for l in range(1, len(self.theta)):
             # gradient doesnt have a None value at index 0, but theta does
-            print 'Average weight for layer', str(l), self.theta[l].sum() / self.theta[l].size
-            print 'Average change for layer', str(l), (gradient[l-1][gradient[l-1] > 0].sum() - gradient[l-1][gradient[l-1] < 0].sum()) / gradient[l-1].size
-            print '-'
             self.theta[l] = np.add(self.theta[l], (-1.0 * self.alpha) * gradient[l-1])

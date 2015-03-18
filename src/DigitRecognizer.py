@@ -40,8 +40,8 @@ training_x = ((x_array - np.average(x_array)) / np.std(x_array)).tolist()
 print 'Training set loaded. Samples:', len(training_x)
 print 'Training network...'
 
-layer_sizes = [784,300,10]
-alpha = 25
+layer_sizes = [784,60,10]
+alpha = 15
 network = NeuralNetwork(layer_sizes, alpha, reg_constant=1)
 
 network.train(training_x[:-500], training_y[:-500], test_inputs=training_x[-500:],
