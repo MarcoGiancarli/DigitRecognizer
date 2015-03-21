@@ -40,12 +40,12 @@ training_x = ((x_array - np.average(x_array)) / np.std(x_array)).tolist()
 print 'Training set loaded. Samples:', len(training_x)
 print 'Training network...'
 
-layer_sizes = [784,60,10]
-alpha = 15
+layer_sizes = [784,117,10]
+alpha = 0.02
 network = NeuralNetwork(layer_sizes, alpha, reg_constant=1)
 
-network.train(training_x[:-500], training_y[:-500], test_inputs=training_x[-500:],
-        test_outputs=training_y[-500:], epoch_cap=100000, error_goal=0.02)
+network.train(training_x[:-2000], training_y[:-2000], test_inputs=training_x[-2000:],
+        test_outputs=training_y[-2000:], epoch_cap=200, error_goal=0.0199, dropout_chance=0.2)
 
 print 'Network trained.'
 
@@ -66,33 +66,27 @@ test_x_raw = []
 test_x = []
 test_y = []
 
-with open('res/datasets/test.csv', ) as test_file:
-    test_data = reader(test_file, delimiter=',')
-    skipped_titles = False
-    for line in test_data:
-        if not skipped_titles:
-            skipped_titles = True
-            continue
-        fields = list(line)
-        test_x_raw = fields
-        # remove the damn labels
-        test_x.append([int(val) for val in test_x_raw])
-
-print 'Loaded test data.'
-print 'Predicting test data...'
-
-x_array = np.array(test_x)
-# normalize the test set
-test_x = ((x_array - np.average(x_array)) / np.std(x_array)).tolist()
-
-predictions = []
-for input in test_x:
-    predictions.append(network.predict(test_x))
-
 with open('gen/nn_benchmark.csv', 'wb') as output_file:
     w = writer(output_file, delimiter=',', quoting=QUOTE_NONE)
-    w.writerow(['ImageId', 'Label'])
-    for test_num, label in zip(range(1, len(predictions)+1), predictions):
-        w.writerow([test_num, label])
+    with open('res/datasets/test.csv', ) as test_file:
+        test_data = reader(test_file, delimiter=',')
+        skipped_titles = False
+        num_in_batch = 0
+        for line in test_data:
+            if not skipped_titles:
+                skipped_titles = True
+                continue
+            fields = list(line)
+            test_x_raw = fields
+            # remove the damn labels
+            test_x.append([int(val) for val in test_x_raw])
+            num_in_batch += 1
+            if num_in_batch == 1000:
+                x_array = np.array(test_x)
+                # normalize the test set
+                test_x = ((x_array - np.average(x_array)) / np.std(x_array)).tolist()
+                for i in range(1000):
+                    w.writerow([network.predict(test_x[i])])
+
 
 print 'Predicted labels and stored as "nn_benchmark.csv".'
