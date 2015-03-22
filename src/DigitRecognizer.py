@@ -20,7 +20,7 @@ with open('res/datasets/train.csv', ) as training_file:
     skipped_titles = False
     # i = 0               ###
     for line in training_data:
-        # if i > 700:     ###
+        # if i > 10000:   ###
         #     break       ###
         # i += 1          ###
         if not skipped_titles:
@@ -40,12 +40,12 @@ training_x = ((x_array - np.average(x_array)) / np.std(x_array)).tolist()
 print 'Training set loaded. Samples:', len(training_x)
 print 'Training network...'
 
-layer_sizes = [784,117,10]
+layer_sizes = [784,120,10]
 alpha = 0.02
-network = NeuralNetwork(layer_sizes, alpha, reg_constant=1)
+network = NeuralNetwork(layer_sizes, alpha)
 
 network.train(training_x[:-2000], training_y[:-2000], test_inputs=training_x[-2000:],
-        test_outputs=training_y[-2000:], epoch_cap=200, error_goal=0.0199, dropout_chance=0.2)
+        test_outputs=training_y[-2000:], epoch_cap=80, error_goal=0.00, dropout_chance=0.2)
 
 print 'Network trained.'
 
@@ -59,6 +59,14 @@ for x, y in zip(training_x[-2000:], training_y[-2000:]):
         num_correct += 1
 print str(num_correct), '/', str(num_tests)
 
+# clear junk
+network.momentum = None
+network.dropout_matrices = None
+training_x = None
+training_y = None
+training_data = None
+training_x_raw = None
+training_y_raw = None
 
 print 'Loading test data...'
 
@@ -68,10 +76,12 @@ test_y = []
 
 with open('gen/nn_benchmark.csv', 'wb') as output_file:
     w = writer(output_file, delimiter=',', quoting=QUOTE_NONE)
+    w.writerow(['ImageId','Label'])
+
     with open('res/datasets/test.csv', ) as test_file:
         test_data = reader(test_file, delimiter=',')
         skipped_titles = False
-        num_in_batch = 0
+        num_predictions = 0
         for line in test_data:
             if not skipped_titles:
                 skipped_titles = True
@@ -80,13 +90,15 @@ with open('gen/nn_benchmark.csv', 'wb') as output_file:
             test_x_raw = fields
             # remove the damn labels
             test_x.append([int(val) for val in test_x_raw])
-            num_in_batch += 1
-            if num_in_batch == 1000:
+            num_predictions += 1
+            if num_predictions % 100 == 0:
                 x_array = np.array(test_x)
                 # normalize the test set
                 test_x = ((x_array - np.average(x_array)) / np.std(x_array)).tolist()
-                for i in range(1000):
-                    w.writerow([network.predict(test_x[i])])
+                for i in range(100):
+                    w.writerow([num_predictions-99+i, network.predict(test_x[i])])
+                test_x = []
+                x_array = []
 
 
 print 'Predicted labels and stored as "nn_benchmark.csv".'

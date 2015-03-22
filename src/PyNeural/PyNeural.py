@@ -71,7 +71,7 @@ class NeuralNetwork:
             # add a constant (1) to the set of weights that correspond with each node
             A_with_ones = np.concatenate((np.array([1]), A[l-1]))
             if dropout_matrices is not None:
-                Z[l] = np.dot(self.theta[l].multiply(self.dropout_matrices[l-1]), A_with_ones)
+                Z[l] = np.dot(np.multiply(self.theta[l], dropout_matrices[l-1]), A_with_ones)
             else:
                 Z[l] = np.dot(self.theta[l], A_with_ones)
             A[l] = sigmoid(Z[l])
@@ -80,7 +80,7 @@ class NeuralNetwork:
 
     ''' Back propagate for one training sample. '''
     def back_prop(self, input_vector, output_vector, dropout_matrices):
-        A, Z = self.feed_forward(input_vector)
+        A, Z = self.feed_forward(input_vector, dropout_matrices)
 
         # let delta be a list of matrices where delta[l][i][j] is delta
         # at layer l, training sample i, and node j

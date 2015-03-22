@@ -9,26 +9,38 @@ from csv import reader
 from csv import writer
 from csv import QUOTE_NONE
 
-files_in_ensemble = [
-    'nn_benchmark.csv'
-    'nn_benchmark1.csv'
-    'nn_benchmark2.csv'
-    'nn_benchmark3.csv'
-    'nn_benchmark4.csv'
-]
+BASE_PATH = '../gen/'
+
+files_in_ensemble = [BASE_PATH + name for name in [
+    'nn_benchmark.csv',
+    # 'nn_benchmark1.csv',
+    # 'nn_benchmark2.csv',
+    # 'nn_benchmark3.csv',
+    # 'nn_benchmark4.csv',
+]]
 
 input_files = [open(file_name,'r') for file_name in files_in_ensemble]
+for f in input_files:
+    f.readline()
 
-with open('gen/ensemble_benchmark.csv', 'wb') as output_file:
+with open(BASE_PATH+'ensemble_benchmark.csv', 'wb') as output_file:
     w = writer(output_file, delimiter=',', quoting=QUOTE_NONE)
+    w.writerow(['ImageId','Label'])
 
-    for dummy in range(28000):
-        current_predictions = ()
-        prediction_counts = [0] * 10
+    for ex_count in range(28000):
+        current_predictions = [] # list of digits given by several input files for the same image
+        prediction_counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # number of times each label appears
+
+        # get the label column for the next line for each input file
         for input_file in input_files:
-            current_predictions += input_file.readline()
+            current_predictions.append(input_file.readline().split(',')[1])
+
+        # add one to the counter at the index of each label from the input files
         for prediction in current_predictions:
             prediction_counts[int(prediction)] += 1
-        _, averaged_prediction = max(prediction_counts)
-        print 'Predictions: '+current_predictions+' -- Average:'+averaged_prediction
-        w.writerow(averaged_prediction)
+
+        # the max index is the label that was predicted most frequently
+        averaged_prediction = max(xrange(len(prediction_counts)),key=prediction_counts.__getitem__)
+
+        print ex_count+1, '-- Predictions counts:', ', '.join(current_predictions), '-- Average:', averaged_prediction
+        w.writerow([ex_count+1, averaged_prediction])
