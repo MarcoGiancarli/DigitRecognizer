@@ -20,7 +20,7 @@ with open('res/datasets/train.csv', ) as training_file:
     skipped_titles = False
     # i = 0               ###
     for line in training_data:
-        # if i > 10000:   ###
+        # if i > 1000:    ###
         #     break       ###
         # i += 1          ###
         if not skipped_titles:
@@ -40,12 +40,12 @@ training_x = ((x_array - np.average(x_array)) / np.std(x_array)).tolist()
 print 'Training set loaded. Samples:', len(training_x)
 print 'Training network...'
 
-layer_sizes = [784,120,10]
+layer_sizes = [784,400,10]
 alpha = 0.02
 network = NeuralNetwork(layer_sizes, alpha)
 
 network.train(training_x[:-2000], training_y[:-2000], test_inputs=training_x[-2000:],
-        test_outputs=training_y[-2000:], epoch_cap=80, error_goal=0.00, dropout_chance=0.2)
+        test_outputs=training_y[-2000:], epoch_cap=150, error_goal=0.018, dropconnect_chance=0.15)
 
 print 'Network trained.'
 
@@ -53,7 +53,6 @@ num_correct = 0
 num_tests = 0
 for x, y in zip(training_x[-2000:], training_y[-2000:]):
     prediction = network.predict(x)
-    # print str(prediction) + ' -- correct number: ' + str(y)
     num_tests += 1
     if int(prediction) == y:
         num_correct += 1
@@ -61,7 +60,7 @@ print str(num_correct), '/', str(num_tests)
 
 # clear junk
 network.momentum = None
-network.dropout_matrices = None
+network.dropconnect_matrices = None
 training_x = None
 training_y = None
 training_data = None
@@ -74,7 +73,7 @@ test_x_raw = []
 test_x = []
 test_y = []
 
-with open('gen/nn_benchmark.csv', 'wb') as output_file:
+with open('gen/nn_benchmark4.csv', 'wb') as output_file:
     w = writer(output_file, delimiter=',', quoting=QUOTE_NONE)
     w.writerow(['ImageId','Label'])
 

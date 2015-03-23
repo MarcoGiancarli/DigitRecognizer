@@ -36,7 +36,7 @@ class NeuralNetwork:
     def __init__(self, layer_sizes, alpha, labels=None, reg_constant=0):
         self.alpha = alpha
         self.regularization_constant = reg_constant
-        self.dropout_matrices = None
+        self.dropconnect_matrices = None
 
         if labels is None:
             self.labels = range(layer_sizes[-1])
@@ -55,14 +55,14 @@ class NeuralNetwork:
             # for every node in layer l, add a weight for each node in layer l-1 plus one bias weight
             beta = 0.7 * math.pow(layer_sizes[l], 1/layer_sizes[l-1])
             self.theta[l] = np.random.random((layer_sizes[l], layer_sizes[l-1]+1)) * 2 - 1
-            norm = [math.sqrt(x) for x in np.multiply(self.theta[l], self.theta[l]).T.dot(np.ones([layer_sizes[l]]))]
-            for row_num in range(layer_sizes[l]):
+            norm = [math.sqrt(x) for x in np.multiply(self.theta[l], self.theta[l]).dot(np.ones([layer_sizes[l-1]+1]))]
+            for row_num in range(len(norm)):
                 self.theta[l][row_num,:] = self.theta[l][row_num,:] * beta / norm[row_num]
 
         self.momentum = [np.zeros(t.shape) for t in self.theta[1:]]
 
     ''' Feed forward and return lists of matrices A and Z for one set of inputs. '''
-    def feed_forward(self, input_vector, dropout_matrices=None):
+    def feed_forward(self, input_vector, dropconnect_matrices=None):
         A = [None]*len(self.theta)
         Z = [None]*len(self.theta)
         A[0] = input_vector.T  # 1 x n
@@ -70,8 +70,8 @@ class NeuralNetwork:
         for l in range(1, len(self.theta)):
             # add a constant (1) to the set of weights that correspond with each node
             A_with_ones = np.concatenate((np.array([1]), A[l-1]))
-            if dropout_matrices is not None:
-                Z[l] = np.dot(np.multiply(self.theta[l], dropout_matrices[l-1]), A_with_ones)
+            if dropconnect_matrices is not None:
+                Z[l] = np.dot(np.multiply(self.theta[l], dropconnect_matrices[l-1]), A_with_ones)
             else:
                 Z[l] = np.dot(self.theta[l], A_with_ones)
             A[l] = sigmoid(Z[l])
@@ -79,8 +79,8 @@ class NeuralNetwork:
         return A, Z
 
     ''' Back propagate for one training sample. '''
-    def back_prop(self, input_vector, output_vector, dropout_matrices):
-        A, Z = self.feed_forward(input_vector, dropout_matrices)
+    def back_prop(self, input_vector, output_vector, dropconnect_matrices):
+        A, Z = self.feed_forward(input_vector, dropconnect_matrices)
 
         # let delta be a list of matrices where delta[l][i][j] is delta
         # at layer l, training sample i, and node j
@@ -100,7 +100,7 @@ class NeuralNetwork:
 
     ''' This method is used for supervised training on a data set. '''
     def train(self, inputs, outputs, test_inputs=None, test_outputs=None, epoch_cap=10000, error_goal=0, \
-                dropout_chance=0.15):
+                dropconnect_chance=0.15):
         # create these first so that we don't have to do it every epoch
         input_vectors = [np.array(x) for x in inputs]
         output_vectors = [np.array(output_scalar_to_vector(y, self.theta[-1].shape[0])) for y in outputs]
@@ -109,10 +109,10 @@ class NeuralNetwork:
 
         m = len(outputs)
         for iteration in range(epoch_cap):
-            if dropout_chance > 0:
-                dropout_matrices = self.make_dropout_matrices(dropout_chance)
+            if dropconnect_chance > 0:
+                dropconnect_matrices = self.make_dropconnect_matrices(dropconnect_chance)
             for input_vector, output_vector in zip(input_vectors, output_vectors):
-                gradient, bias = self.back_prop(input_vector, output_vector, dropout_matrices)
+                gradient, bias = self.back_prop(input_vector, output_vector, dropconnect_matrices)
                 gradient_with_bias = [None]*len(self.theta)
 
                 for l in range(1, len(self.theta)):
@@ -148,7 +148,7 @@ class NeuralNetwork:
             self.theta[l] = np.add(self.theta[l], (-1.0 * self.alpha) * (gradient[l-1] + self.momentum[l-1]))
         self.momentum = [m/2 + g/2 for m, g in zip(self.momentum, gradient)]
 
-    def make_dropout_matrices(self, dropout_chance):
-        assert(0 <= dropout_chance < 1)
-        dropout_matrices = [np.fix(np.random.random(t.shape) + (1-dropout_chance)) for t in self.theta[1:]]
-        return dropout_matrices
+    def make_dropconnect_matrices(self, dropconnect_chance):
+        assert(0 <= dropconnect_chance < 1)
+        dropconnect_matrices = [np.fix(np.random.random(t.shape) + (1-dropconnect_chance)) for t in self.theta[1:]]
+        return dropconnect_matrices

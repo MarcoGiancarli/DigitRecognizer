@@ -5,17 +5,16 @@ __author__ = 'MarcoGiancarli, m.a.giancarli@gmail.com'
 # networks. It reads the results from the benchmark csv files and write the mode
 # into a file named 'ensemble_benchmark.csv'.
 
-from csv import reader
 from csv import writer
 from csv import QUOTE_NONE
 
 BASE_PATH = '../gen/'
 
 files_in_ensemble = [BASE_PATH + name for name in [
-    'nn_benchmark.csv',
-    # 'nn_benchmark1.csv',
-    # 'nn_benchmark2.csv',
-    # 'nn_benchmark3.csv',
+    # 'nn_benchmark.csv',
+    'nn_benchmark1.csv',
+    'nn_benchmark2.csv',
+    'nn_benchmark3.csv',
     # 'nn_benchmark4.csv',
 ]]
 
@@ -42,5 +41,6 @@ with open(BASE_PATH+'ensemble_benchmark.csv', 'wb') as output_file:
         # the max index is the label that was predicted most frequently
         averaged_prediction = max(xrange(len(prediction_counts)),key=prediction_counts.__getitem__)
 
-        print ex_count+1, '-- Predictions counts:', ', '.join(current_predictions), '-- Average:', averaged_prediction
+        print str(ex_count+1) + ' -- Predictions: ' + ', '.join(current_predictions) + \
+                ' -- Average: ' + str(averaged_prediction)
         w.writerow([ex_count+1, averaged_prediction])
