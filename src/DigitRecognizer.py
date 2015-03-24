@@ -40,7 +40,7 @@ training_x = ((x_array - np.average(x_array)) / np.std(x_array)).tolist()
 print 'Training set loaded. Samples:', len(training_x)
 print 'Training network...'
 
-layer_sizes = [784,400,10]
+layer_sizes = [784,300,10]
 alpha = 0.02
 network = NeuralNetwork(layer_sizes, alpha)
 
@@ -73,7 +73,7 @@ test_x_raw = []
 test_x = []
 test_y = []
 
-with open('gen/nn_benchmark4.csv', 'wb') as output_file:
+with open('gen/nn_benchmark5.csv', 'wb') as output_file:
     w = writer(output_file, delimiter=',', quoting=QUOTE_NONE)
     w.writerow(['ImageId','Label'])
 

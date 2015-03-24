@@ -88,7 +88,7 @@ class NeuralNetwork:
         delta[-1] = np.multiply(A[-1] - output_vector.T, d_sigmoid(Z[-1]))
 
         for l in reversed(range(1, len(self.theta)-1)):  # note: no error on input layer, we have the output layer
-            theta_t_delta = np.dot(self.theta[l+1].T, delta[l+1])
+            theta_t_delta = np.dot(np.multiply(self.theta[l+1], dropconnect_matrices[l]).T, delta[l+1])
             delta[l] = np.multiply(theta_t_delta[1:], d_sigmoid(Z[l]))
 
         # Calculate the partial derivatives for all theta values using delta
@@ -99,7 +99,7 @@ class NeuralNetwork:
         return D, delta
 
     ''' This method is used for supervised training on a data set. '''
-    def train(self, inputs, outputs, test_inputs=None, test_outputs=None, epoch_cap=10000, error_goal=0, \
+    def train(self, inputs, outputs, test_inputs=None, test_outputs=None, epoch_cap=1000, error_goal=0, \
                 dropconnect_chance=0.15):
         # create these first so that we don't have to do it every epoch
         input_vectors = [np.array(x) for x in inputs]
