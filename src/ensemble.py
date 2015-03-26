@@ -15,7 +15,8 @@ files_in_ensemble = [BASE_PATH + name for name in [
     'nn_benchmark1.csv',
     'nn_benchmark2.csv',
     'nn_benchmark3.csv',
-    # 'nn_benchmark4.csv',
+    'nn_benchmark4.csv',
+    'nn_benchmark5.csv',
 ]]
 
 input_files = [open(file_name,'r') for file_name in files_in_ensemble]

@@ -40,12 +40,12 @@ training_x = ((x_array - np.average(x_array)) / np.std(x_array)).tolist()
 print 'Training set loaded. Samples:', len(training_x)
 print 'Training network...'
 
-layer_sizes = [784,300,10]
+layer_sizes = [784,240,10]
 alpha = 0.02
 network = NeuralNetwork(layer_sizes, alpha)
 
-network.train(training_x[:-2000], training_y[:-2000], test_inputs=training_x[-2000:],
-        test_outputs=training_y[-2000:], epoch_cap=150, error_goal=0.018, dropconnect_chance=0.15)
+network.train(training_x[:-2000], training_y[:-2000], test_inputs=training_x[-2000:], test_outputs=training_y[-2000:],
+        epoch_cap=300, error_goal=0.01, dropconnect_chance=0.15)
 
 print 'Network trained.'
 
@@ -73,7 +73,9 @@ test_x_raw = []
 test_x = []
 test_y = []
 
-with open('gen/nn_benchmark5.csv', 'wb') as output_file:
+output_file_name = 'gen/nn_benchmark.csv'
+
+with open(output_file_name, 'wb') as output_file:
     w = writer(output_file, delimiter=',', quoting=QUOTE_NONE)
     w.writerow(['ImageId','Label'])
 
@@ -100,4 +102,4 @@ with open('gen/nn_benchmark5.csv', 'wb') as output_file:
                 x_array = []
 
 
-print 'Predicted labels and stored as "nn_benchmark.csv".'
+print 'Predicted labels and stored as "'+output_file_name+'".'
